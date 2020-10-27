@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="android.text.TextUtils" />
+
+        <variable
+            name="article"
+            type="com.lxl.essence.paging.Article" />
+
+        <variable
+            name="callback"
+            type="com.lxl.essence.paging.ArticleCallBack" />
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp">
+
+        <Button
+            android:id="@+id/confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            tools:enabled="true"
+            android:background="@drawable/selector_btn"
+            android:onClick="@{()->callback.onEditClick(article)}"
+            android:text="确认"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/full_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/confirm"
+            android:layout_alignBottom="@id/confirm"
+            android:layout_toLeftOf="@id/confirm"
+            android:background="@android:color/darker_gray"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:onClick="@{()->callback.onItemClick(article)}"
+            android:paddingLeft="8dp"
+            android:text="@{article.title}"
+            tools:text="123" />
+
+        <TextView
+            android:id="@+id/police_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/full_info"
+            android:layout_alignStart="@id/full_info"
+            android:layout_alignLeft="@id/full_info"
+            android:layout_alignEnd="@id/full_info"
+            android:layout_alignRight="@id/full_info"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:paddingLeft="8dp"
+            android:text="@{article.author}"
+            tools:text="123" />
+    </RelativeLayout>
+</layout>
