@@ -28,10 +28,18 @@ public class ArticleAdapter extends RecyclerView.Adapter<DataBoundViewHolder<Ite
 
 
     public void addAll(List<Article> datas) {
-        if (datas != null&&!datas.isEmpty()) {
+        if (datas != null && !datas.isEmpty()) {
             this.list.addAll(datas);
             notifyDataSetChanged();
         }
+    }
+
+    public void replace(List<Article> datas) {
+        this.clear();
+        if (datas != null && !datas.isEmpty()) {
+            this.list.addAll(datas);
+        }
+        notifyDataSetChanged();
     }
 
     public void modify(Article metaDz) {

@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mobile_navigation.xml"
-    app:startDestination="@id/articleQueryListFragment">
+    app:startDestination="@id/articleList2Fragment">
 
     <fragment
         android:id="@+id/articleListFragment"
@@ -21,4 +21,8 @@
         android:id="@+id/articleQueryListFragment"
         android:name="com.lxl.essence.paging.lib2.ArticleListFragment"
         android:label="ArticleListFragment" />
+    <fragment
+        android:id="@+id/articleList2Fragment"
+        android:name="com.lxl.essence.paging.custom.ArticleList2Fragment"
+        android:label="ArticleList2Fragment" />
 </navigation>

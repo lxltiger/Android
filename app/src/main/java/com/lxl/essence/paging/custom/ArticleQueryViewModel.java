@@ -17,8 +17,6 @@
 package com.lxl.essence.paging.custom;
 
 
-import android.util.Log;
-
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
@@ -26,56 +24,42 @@ import androidx.lifecycle.ViewModel;
 
 import com.lxl.essence.App;
 import com.lxl.essence.base.HandyLiveData;
-import com.lxl.essence.paging.Article;
 import com.lxl.essence.paging.ArticleRepository;
+import com.lxl.essence.paging.Data;
 import com.lxl.essence.vo.Resource;
 
 import java.util.List;
 
 
-public class ArticleViewModel extends ViewModel {
+public class ArticleQueryViewModel extends ViewModel {
     private static final String TAG = "UnrelatedViewModel";
-    private final MutableLiveData<Integer> pageNo = new MutableLiveData<>();
-
-    public final LiveData<Resource<List<Article>>> articles;
-    public final MutableLiveData<Article> articleMutableLiveData = new MutableLiveData<>();
-
     private ArticleRepository repository;
+    private final MutableLiveData<PageQueryRequest> pageQuery = new MutableLiveData<>();
+    public final LiveData<Resource<Data>> results;
+
+    //记录当前加载页 防止重复加载
     private int currentPageNo;
+    //每页数量不大 最后一屏显示 因为是手动选页
+    private int pageSize = 8;
 
-    public ArticleViewModel() {
+    private final PageQueryRequest request;
+
+    public ArticleQueryViewModel() {
+        request = new PageQueryRequest(1, pageSize, "");
         repository = App.get().baseRepository();
-
-        articles = Transformations.switchMap(pageNo, pageNo -> {
-            if (pageNo != null && pageNo >= 0) {
-                return repository.retrieveArticle(pageNo);
+        results = Transformations.switchMap(pageQuery, pageQuery -> {
+            if (pageQuery != null) {
+                return repository.retrieveData(pageQuery);
             } else {
-                return HandyLiveData.create(Resource.error("页号异常", null));
+                return HandyLiveData.create(Resource.error("参数为空", null));
             }
         });
-
-
     }
 
-
-    public void loadFirst() {
-        currentPageNo = 1;
-        this.pageNo.setValue(1);
-    }
-
-    //
-    public void loadingMore(int pageNo) {
-        //为了避免重复执行 拒绝相同页的请求
-        if (currentPageNo == pageNo) {
-            return;
-        }
-        currentPageNo = pageNo;
-        Log.d(TAG, "request: ");
-        this.pageNo.setValue(pageNo);
-    }
-
-    public void setArticle(Article article) {
-        articleMutableLiveData.setValue(article);
+    public void loadPage(int pageNo, String query) {
+        request.setPageNo(pageNo);
+        request.setQuery(query);
+        this.pageQuery.setValue(request);
     }
 
 }
