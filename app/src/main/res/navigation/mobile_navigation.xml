@@ -2,11 +2,11 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mobile_navigation.xml"
-    app:startDestination="@id/articleListFragment">
+    app:startDestination="@id/articleQueryListFragment">
 
     <fragment
         android:id="@+id/articleListFragment"
-        android:name="com.lxl.essence.paging.ArticleListFragment"
+        android:name="com.lxl.essence.paging.custom.ArticleListFragment"
         android:label="ArticleListFragment" >
         <action
             android:id="@+id/action_to_modifyFragment"
@@ -15,6 +15,10 @@
 
     <fragment
         android:id="@+id/modifyFragment"
-        android:name="com.lxl.essence.paging.ModifyFragment"
+        android:name="com.lxl.essence.paging.custom.ModifyFragment"
         android:label="ModifyFragment" />
+    <fragment
+        android:id="@+id/articleQueryListFragment"
+        android:name="com.lxl.essence.paging.lib2.ArticleListFragment"
+        android:label="ArticleListFragment" />
 </navigation>

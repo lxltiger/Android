@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lxl.essence.paging;
+package com.lxl.essence.paging.custom;
 
 
 import android.os.Bundle;
@@ -38,6 +38,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.lxl.essence.R;
 import com.lxl.essence.base.RecyclerViewNoBugLinearLayoutManager;
 import com.lxl.essence.databinding.FragmentArticleListBinding;
+import com.lxl.essence.paging.Article;
+import com.lxl.essence.paging.ArticleCallBack;
 import com.lxl.essence.vo.Resource;
 
 import java.util.List;

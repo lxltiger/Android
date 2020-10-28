@@ -1,4 +1,4 @@
-package com.lxl.essence.paging;
+package com.lxl.essence.paging.custom;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,6 +15,7 @@ import androidx.navigation.Navigation;
 
 import com.lxl.essence.R;
 import com.lxl.essence.databinding.FragmentModifyBinding;
+import com.lxl.essence.paging.Article;
 
 /*
  *

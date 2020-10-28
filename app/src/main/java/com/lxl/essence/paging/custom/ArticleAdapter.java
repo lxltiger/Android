@@ -1,4 +1,4 @@
-package com.lxl.essence.paging;
+package com.lxl.essence.paging.custom;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.lxl.essence.R;
 import com.lxl.essence.base.DataBoundViewHolder;
 import com.lxl.essence.databinding.ItemArticleBinding;
+import com.lxl.essence.paging.Article;
+import com.lxl.essence.paging.ArticleCallBack;
 
 import java.util.ArrayList;
 import java.util.List;

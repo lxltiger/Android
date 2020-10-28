@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lxl.essence.paging;
+package com.lxl.essence.paging.custom;
 
 
 import android.util.Log;
@@ -26,6 +26,8 @@ import androidx.lifecycle.ViewModel;
 
 import com.lxl.essence.App;
 import com.lxl.essence.base.HandyLiveData;
+import com.lxl.essence.paging.Article;
+import com.lxl.essence.paging.ArticleRepository;
 import com.lxl.essence.vo.Resource;
 
 import java.util.List;
