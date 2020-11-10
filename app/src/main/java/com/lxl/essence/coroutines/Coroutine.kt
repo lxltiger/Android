@@ -96,17 +96,75 @@ class Basic {
         }
     }
 }
+
 class Cancellation {
-    //运行不能取消的代码库
-    fun main() = runBlocking<Unit> {
+    //可取消的协程，挂起函数都是可以取消的，它们检查协程的取消， 并在取消时抛出 CancellationException
+    fun cancelable() = runBlocking {
         val job = launch {
+            repeat(100) { num ->
+                println("sleep $num")
+                delay(500)
+            }
+        }
+
+        delay(1300)
+        println("cancel waiting")
+        job.cancel()
+        //等待job结束
+        job.join()
+        println("exit")
+
+    }
+
+    //如果协程正在执行计算任务，并且不检查取消操作就不能取消
+    fun uncancelable() = runBlocking {
+        //如果不指定默认调度器，这个协程会挂起？
+        val job = launch(Dispatchers.Default) {
+            var nextTime = System.currentTimeMillis();
+            var a = 0;
+            while (a < 5) {
+                if (System.currentTimeMillis() >= nextTime) {
+                    println("sleep ${a++}")
+                    nextTime += 500;
+                }
+            }
+        }
+        delay(1300)
+        println("cancel waiting")
+        job.cancelAndJoin()
+        println("exit")
+    }
+
+    fun checkCancelable() = runBlocking {
+        val job = launch(Dispatchers.Default) {
+            var nextTime = System.currentTimeMillis();
+            var a = 0;
+            //加上isActive是计算代码可取消
+            while (isActive && a < 5) {
+                if (System.currentTimeMillis() >= nextTime) {
+                    println("sleep ${a++}")
+                    nextTime += 500;
+                }
+            }
+        }
+        delay(1300)
+        println("cancel waiting")
+        job.cancelAndJoin()
+        println("exit")
+    }
+
+    //运行不能取消的代码库
+    fun releaseInFinal() = runBlocking<Unit> {
+        val job = launch() {
             try {
                 repeat(100) { it ->
                     println("sleep $it")
                     delay(200)
                 }
             } finally {
-                //在finally中调用挂起函数会抛出异常，为次需要使用withContext+NonCancelable帮忙
+                //当协程被取消，在此执行最后操作 一般不会在此调用挂起函数
+                //如果在finally中调用挂起函数会抛出异常，
+                // 如果一定要用 使用withContext+NonCancelable帮忙
                 withContext(NonCancellable) {
                     println("ready to suspend")
                     delay(2000)
@@ -117,13 +175,14 @@ class Cancellation {
 
         delay(1300)
         println("no longer to wait")
+        //取消后会等待协程中的finally执行完毕
         job.cancelAndJoin()
         println("end")
 
     }
 
     //超时处理
-    fun main2() = runBlocking {
+    fun handleTimeout() = runBlocking {
         //如果超时返回Null而不是抛出异常
         val result = withTimeoutOrNull(2300) {
             repeat(20) { num ->
@@ -136,7 +195,7 @@ class Cancellation {
     }
 }
 
-fun main() {
+fun mainBasic() {
     val basic = Basic();
     basic.basic();
     basic.basic2();
@@ -146,9 +205,17 @@ fun main() {
     basic.customScope()
     basic.lightWeight()
 
-//    val c = Cancellation();
-//    c.main()
+
 }
+
+fun main() {
+    val c = Cancellation();
+//    c.cancelable()
+//    c.uncancelable()
+//    c.checkCancelable()
+    c.releaseInFinal()
+}
+
 
 
 
