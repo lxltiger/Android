@@ -3,6 +3,8 @@ package com.lxl.essence.coroutines
 import kotlinx.coroutines.*
 import java.lang.RuntimeException
 import java.lang.Thread.sleep
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.system.measureTimeMillis
 
 
@@ -338,7 +340,7 @@ class Compose {
 
     //如果sum方法出错抛出异常，其中的协程都会被取消
     suspend fun failedSum(): Int = coroutineScope {
-        val one =async<Int> {
+        val one = async<Int> {
             try {
                 delay(Long.MAX_VALUE)
                 43
@@ -358,14 +360,14 @@ class Compose {
     }
 
     fun safeConcurrent() = runBlocking {
-       /* val elapse = measureTimeMillis {
-            println("time cosume ${sum()}")
-        }
-        println("time elapse $elapse")*/
+        /* val elapse = measureTimeMillis {
+             println("time cosume ${sum()}")
+         }
+         println("time elapse $elapse")*/
 
-        try{
+        try {
             failedSum()
-        } catch(e: ArithmeticException) {
+        } catch (e: ArithmeticException) {
             println("Computation failed with ArithmeticException")
         }
     }
@@ -380,26 +382,75 @@ fun compose() {
     compose.safeConcurrent()
 }
 
-class Dispatcher{
-    fun simpleContext()= runBlocking {
+class Dispatcher {
+    //使用 -Dkotlinx.coroutines.debug JVM参数 可以打印线程和协程的信息
+    fun log(msg: String, coroutineContext: CoroutineContext) {
+        println("[${Thread.currentThread().name} ${coroutineContext[Job]}] ${msg}")
+    }
 
-        launch { // context of the parent, main runBlocking coroutine
-            println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
+    fun simpleContext() = runBlocking {
+        //如果没有指定调度器，继承父协程 也就是和runBlocking在一个上下文
+        launch {
+            log("main runBlocking", coroutineContext)
+            delay(100)
+            //从挂起函数恢复执行 依然在统一线程
+            log("main runBlocking", coroutineContext)
+
         }
-        launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
-            println("Unconfined            : I'm working in thread ${Thread.currentThread().name}")
+        //不限定调度器 不建议使用
+        launch(Dispatchers.Unconfined) {
+            //运行在runBlocking所在线程
+            log("Unconfined ", coroutineContext)
+            delay(100)
+            //从挂起函数恢复后，运行在挂起函数所在线程而不是runBlocking所在线程
+            //协程可以在一个线程上执行，挂起恢复后又从另一个线程恢复执行，所以不适合更新UI
+            log("Unconfined ", coroutineContext)
         }
-        launch(Dispatchers.Default) { // will get dispatched to DefaultDispatcher
-            println("Default               : I'm working in thread ${Thread.currentThread().name}")
+    }
+
+    fun logDebug() = runBlocking {
+        val one = async {
+            delay(200)
+            log("calcualte one", coroutineContext)
+            12
         }
-        launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
-            println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
+        val two = async {
+            delay(1200)
+            log("calcualte two", coroutineContext)
+            12
         }
+        log("sum is ${one.await() + two.await()}", coroutineContext)
+    }
+
+    fun scope() = runBlocking {
+        val request = launch {
+            // 孵化了两个子作业, 其中一个通过 GlobalScope 启动,不会父协程取消影响
+            GlobalScope.launch {
+                log("job1: I run in GlobalScope and execute independently!", coroutineContext)
+                delay(1000)
+                log("job1: I am not affected by cancellation of the request", coroutineContext)
+            }
+            // 另一个则承袭了父协程的上下文
+            launch {
+                delay(100)
+                log("job2: I am a child of the request coroutine", coroutineContext)
+                delay(1000)
+                log("job2: I will not execute this line if my parent request is cancelled", coroutineContext)
+            }
+        }
+        delay(500)
+        request.cancel()
+        delay(1000)
+        log("who exist", coroutineContext)
     }
 }
 
 fun main() {
-    val dispatcher =Dispatcher();
-    dispatcher.simpleContext()
+    val dispatcher = Dispatcher();
+//    dispatcher.simpleContext()
+//    dispatcher.logDebug()
+    dispatcher.scope()
+
+
 }
 
