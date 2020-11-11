@@ -1,7 +1,9 @@
 package com.lxl.essence.coroutines
 
 import kotlinx.coroutines.*
+import java.lang.RuntimeException
 import java.lang.Thread.sleep
+import kotlin.system.measureTimeMillis
 
 
 class Basic {
@@ -97,6 +99,17 @@ class Basic {
     }
 }
 
+fun basic() {
+    val basic = Basic();
+    basic.basic();
+    basic.basic2();
+    basic.basic3();
+    basic.basic4();
+    basic.basic5();
+    basic.customScope()
+    basic.lightWeight()
+}
+
 var count = 0;
 
 class Resource {
@@ -108,6 +121,7 @@ class Resource {
         count--
     }
 }
+
 
 class Cancellation {
     //可取消的协程，挂起函数都是可以取消的，它们检查协程的取消， 并在取消时抛出 CancellationException
@@ -235,13 +249,13 @@ class Cancellation {
         runBlocking {
             repeat(100_000) {
                 launch {
-                   var resource:Resource?=null
+                    var resource: Resource? = null
                     try {
                         withTimeout(60) {
                             delay(50)
-                            resource=Resource()
+                            resource = Resource()
                         }
-                    }finally {
+                    } finally {
                         num++
                         resource?.close()
                     }
@@ -253,18 +267,6 @@ class Cancellation {
     }
 }
 
-fun basic() {
-    val basic = Basic();
-    basic.basic();
-    basic.basic2();
-    basic.basic3();
-    basic.basic4();
-    basic.basic5();
-    basic.customScope()
-    basic.lightWeight()
-
-
-}
 
 fun cancellation() {
     val c = Cancellation();
@@ -278,5 +280,103 @@ fun cancellation() {
 }
 
 
+class Compose {
+    suspend fun timeConsumeOne(): Long {
+        delay(1000)
+        return 12
+    }
 
+    suspend fun timeConsumeTwo(): Long {
+        delay(2000)
+        return 15
+    }
+
+    fun sequential() = runBlocking {
+        //协程内的函数默认是顺序执行的
+        val elapse = measureTimeMillis {
+            val one = timeConsumeOne()
+            val two = timeConsumeTwo()
+            println("reuslt is ${one + two}")
+        }
+        println("time elapse $elapse")
+    }
+
+    fun concurrent() = runBlocking {
+        val elapse = measureTimeMillis {
+//            asyn和launch一样开启一个协程，不同的是launch返回的job不带结果，而asyn返回一个deffer，它是可以在未来获取结果的
+            val one = async { timeConsumeOne() }
+            val two = async { timeConsumeTwo() }
+            //先打印 上面代码不会阻塞
+            println("waiting two")
+//            可以使用await等待deffer返回结果，两个并发执行，耗时取决于较长的，而不是像顺序执行那样相加
+            println("two consume ${two.await()}")
+            println("waiting one")
+            println("one consume ${one.await()}")
+        }
+        println("time elapse $elapse")
+    }
+
+    fun lazyConcurrent() = runBlocking {
+        val elapse = measureTimeMillis {
+//            使用懒加载，不会执行方法直到调用start或await方法 让用户有更细粒度的控制
+            val one = async(start = CoroutineStart.LAZY) { timeConsumeOne() }
+            val two = async(start = CoroutineStart.LAZY) { timeConsumeTwo() }
+            //这里需要先使用start 否则依赖await方法启动会阻塞到结果返回
+            one.start()
+            two.start()
+            println("waiting")
+            println("time consume ${one.await() + two.await()}")
+        }
+        println("time elapse $elapse")
+    }
+
+    suspend fun sum(): Long = coroutineScope {
+        val one = async { timeConsumeOne() }
+        val two = async { timeConsumeTwo() }
+        one.await() + two.await()
+    }
+
+    //如果sum方法出错抛出异常，其中的协程都会被取消
+    suspend fun failedSum(): Int = coroutineScope {
+        val one =async<Int> {
+            try {
+                delay(Long.MAX_VALUE)
+                43
+            } finally {
+                println("cancel")
+            }
+        }
+
+        //立马异步执行
+        val two = async<Int> {
+            delay(2400)
+            println("Second child throws an exception")
+            throw ArithmeticException()
+        }
+
+        one.await() + two.await()
+    }
+
+    fun safeConcurrent() = runBlocking {
+       /* val elapse = measureTimeMillis {
+            println("time cosume ${sum()}")
+        }
+        println("time elapse $elapse")*/
+
+        try{
+            failedSum()
+        } catch(e: ArithmeticException) {
+            println("Computation failed with ArithmeticException")
+        }
+    }
+}
+
+
+fun main() {
+    val compose = Compose();
+//    compose.sequential()
+//    compose.concurrent()
+//    compose.lazyConcurrent()
+    compose.safeConcurrent()
+}
 
