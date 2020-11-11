@@ -97,6 +97,18 @@ class Basic {
     }
 }
 
+var count = 0;
+
+class Resource {
+    init {
+        count++;
+    }
+
+    fun close() {
+        count--
+    }
+}
+
 class Cancellation {
     //可取消的协程，挂起函数都是可以取消的，它们检查协程的取消， 并在取消时抛出 CancellationException
     fun cancelable() = runBlocking {
@@ -184,18 +196,64 @@ class Cancellation {
     //超时处理
     fun handleTimeout() = runBlocking {
         //如果超时返回Null而不是抛出异常
-        val result = withTimeoutOrNull(2300) {
+        val result = withTimeoutOrNull(1300) {
+            //不可取消协程，超时抛出异常
             repeat(20) { num ->
                 print("sleep $num")
-                delay(100)
+                delay(500)
             }
             "done"//如果超时之前完成返回done
         }
         print("result is $result")
     }
+
+    fun unSafeAsynTimeOut() {
+        var num = 0;
+        runBlocking {
+            repeat(10000) {
+                launch {
+                    //虽然理论上60比50大，应该在超时之前完成初始化
+                    //但超时是异步的，有可能在Resource返回之前就超时了
+                    val resource = withTimeout(60) {
+                        delay(50)
+                        Resource()
+                    }
+                    //如果超时了这里都不会执行 资源不会释放
+                    num++
+                    //在协程外部释放资源是危险的
+                    resource.close()
+                }
+            }
+        }
+        print("num $num")
+        print("count $count")
+    }
+
+    fun safeAsynTimeOut() {
+        var num = 0;
+        //阻塞当前线程 直到其中协程执行完毕
+        runBlocking {
+            repeat(100_000) {
+                launch {
+                   var resource:Resource?=null
+                    try {
+                        withTimeout(60) {
+                            delay(50)
+                            resource=Resource()
+                        }
+                    }finally {
+                        num++
+                        resource?.close()
+                    }
+                }
+            }
+        }
+        print("num $num")
+        print("count $count")
+    }
 }
 
-fun mainBasic() {
+fun basic() {
     val basic = Basic();
     basic.basic();
     basic.basic2();
@@ -208,12 +266,15 @@ fun mainBasic() {
 
 }
 
-fun main() {
+fun cancellation() {
     val c = Cancellation();
-//    c.cancelable()
-//    c.uncancelable()
-//    c.checkCancelable()
+    c.cancelable()
+    c.uncancelable()
+    c.checkCancelable()
     c.releaseInFinal()
+    c.handleTimeout()
+    c.unSafeAsynTimeOut()
+    c.safeAsynTimeOut()
 }
 
 
