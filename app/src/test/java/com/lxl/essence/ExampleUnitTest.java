@@ -27,22 +27,6 @@ public class ExampleUnitTest {
 
     }
 
-    @Test
-    public void plus() {
-
-        int count = 10;
-        Random random =new Random();
-        int[] a =new int[count] ;
-        int[] b =new int[count] ;
-        int[] c =new int[count] ;
-        for (int i = 0; i < count; i++) {
-            a[i] = 5 + random.nextInt(20);
-            b[i] = 5 + random.nextInt(5);
-            c[i] = a[i] + b[i];
-            System.out.printf("%2d. %4d + %2d = %4d\n", i+1,a[i], b[i], c[i]);
-        }
-
-    }
 
     @Test
     public void muitplay() {
@@ -52,8 +36,8 @@ public class ExampleUnitTest {
         int[] b =new int[count] ;
         int[] c =new int[count] ;
         for (int i = 0; i < count; i++) {
-            a[i] = 2 + random.nextInt(10);
-            b[i] =2 + random.nextInt(10);
+            a[i] =10 + random.nextInt(90);
+            b[i] = 10 + random.nextInt(90);
             c[i] = a[i] * b[i];
             System.out.printf("%2d. %4d X %2d = %4d\n", i+1,a[i], b[i], c[i]);
         }

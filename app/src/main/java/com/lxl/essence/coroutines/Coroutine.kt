@@ -382,6 +382,24 @@ fun compose() {
     compose.safeConcurrent()
 }
 
+class Activity {
+
+    private val mainScope = CoroutineScope(Dispatchers.Default);
+
+    fun doSomething() {
+        repeat(10) { i ->
+            mainScope.launch {
+                delay((i + 1) * 200L)
+                println("Coroutine ${i} is done")
+            }
+        }
+    }
+
+    fun destroy() {
+        mainScope.cancel()
+    }
+}
+
 class Dispatcher {
     //使用 -Dkotlinx.coroutines.debug JVM参数 可以打印线程和协程的信息
     fun log(msg: String, coroutineContext: CoroutineContext) {
@@ -422,9 +440,40 @@ class Dispatcher {
         log("sum is ${one.await() + two.await()}", coroutineContext)
     }
 
-    fun scope() = runBlocking {
+
+    fun parent1() = runBlocking {
         val request = launch {
-            // 孵化了两个子作业, 其中一个通过 GlobalScope 启动,不会父协程取消影响
+            repeat(3) { i ->
+                launch {
+                    delay((i + 1) * 300L)
+                    log("${i} is done", coroutineContext)
+                }
+            }
+            println("request: I'm done and I don't explicitly join my children that are still active")
+        }
+        //显式等待request的结束
+        request.join()
+        println("Now processing of the request is complete")
+    }
+
+    fun parent2() = runBlocking {
+        //coroutineScope会挂起等待子例程结束
+        coroutineScope {
+            repeat(3) { i ->
+                launch {
+                    delay((i + 1) * 300L)
+                    log("${i} is done", coroutineContext)
+                }
+            }
+            println("request: I'm done and I don't explicitly join my children that are still active")
+        }
+        println("Now processing of the request is complete")
+    }
+
+    fun parent3() = runBlocking {
+//        如果父协程被取消，它的子协程通常也会被取消
+        val request = launch {
+            // 使用 GlobalScope 启动的协程不会受父协程取消的影响  是独立额
             GlobalScope.launch {
                 log("job1: I run in GlobalScope and execute independently!", coroutineContext)
                 delay(1000)
@@ -443,14 +492,43 @@ class Dispatcher {
         delay(1000)
         log("who exist", coroutineContext)
     }
+
+    fun nameCoroutine() = runBlocking {
+        log("Started main coroutine", coroutineContext)
+        //给协程命名  这样在debugging mode时， 协程的名字会包含在线程名字之中：如：[main @v1coroutine#2]
+        val v1 = async(CoroutineName("v1coroutine")) {
+            delay(300)
+            log("compute v1", coroutineContext)
+            23
+        }
+
+        val v2 = async(CoroutineName("v2coroutine")) {
+            delay(700)
+            log("compute v2", coroutineContext)
+            2
+        }
+        log("The answer for v1 * v2 = ${v1.await() * v2.await()}", coroutineContext)
+    }
+
+    fun scope() = runBlocking {
+        val activity = Activity();
+        println("Launched coroutines")
+        activity.doSomething()
+        delay(500L) // delay for half a second
+        println("Destroying activity!")
+        activity.destroy()
+        delay(1000)
+
+    }
 }
 
 fun main() {
     val dispatcher = Dispatcher();
 //    dispatcher.simpleContext()
 //    dispatcher.logDebug()
+//    dispatcher.scope()
+//    dispatcher.parent2()
+//    dispatcher.nameCoroutine()
     dispatcher.scope()
-
-
 }
 
