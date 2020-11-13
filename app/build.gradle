@@ -80,6 +80,7 @@ dependencies {
     implementation deps.lifecycle.runtime
     implementation deps.lifecycle.extensions
     implementation deps.lifecycle.java8
+    implementation deps.lifecycle.viewmodel_ktx
     annotationProcessor deps.lifecycle.compiler
     //分页
     implementation 'androidx.paging:paging-runtime:2.1.2'
