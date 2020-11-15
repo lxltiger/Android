@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: "androidx.navigation.safeargs"
 
@@ -61,7 +62,7 @@ repositories {
 }
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation(name: 'ocr-library-1.2', ext: 'aar')
+//    implementation(name: 'ocr-library-1.2', ext: 'aar')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.10"
     implementation 'androidx.core:core-ktx:1.3.1'
@@ -73,9 +74,11 @@ dependencies {
     implementation deps.support.annotations
     implementation deps.navigation.fragment
     implementation deps.navigation.ui
-    //    Room
-//    implementation deps.room.runtime
-//    annotationProcessor deps.room.compiler
+    //   带kotlin扩展的Room
+    implementation deps.room.ktx
+//    implementation 'androidx.room:room-runtime:2.2.5'
+    //因为room库是带kotlin扩展的 必须使用kotlin注解处理器
+    kapt deps.room.compiler
     //    LiveData、ViewModel
     implementation deps.lifecycle.runtime
     implementation deps.lifecycle.extensions
@@ -95,5 +98,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    annotationProcessor 'androidx.room:room-compiler:2.2.5'
 
 }
