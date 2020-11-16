@@ -50,6 +50,8 @@ import java.util.List;
 
 /*
  *Web式的分页方式，没有上拉加载 手动选取页数
+ * Navigation导航使用的replace替换当前页面，导致视图被销毁，对于动态加载的视图，比如页面的页码，在返回的时候就消失了
+ * 解决的办法是保存视图，返回的时候复用
  * */
 public class ArticleList2Fragment extends Fragment {
     private static final String TAG = "AddressListFragment";
@@ -92,16 +94,38 @@ public class ArticleList2Fragment extends Fragment {
         }
     }
 
+    //中间页加载需要高亮当前页按钮
     private void onPageTextClick(View view) {
         if (view instanceof RadioButton) {
             RadioButton button = (RadioButton) view;
             button.setChecked(true);
         }
-        String query = binding.input.getText().toString();
+        loadPage(view);
+      /*  String query = binding.input.getText().toString();
         dismissKeyboard(view.getWindowToken());
         Integer pageNo = (Integer) view.getTag();
         if (pageNo != null) {
             currentPage=pageNo;
+            viewModel.loadPage(currentPage, query);
+        }*/
+    }
+//    点击首页滑动到最左边
+    private void onPageHomeClick(View view) {
+        binding.hs.fullScroll(View.FOCUS_LEFT);
+        loadPage(view);
+    }
+    //    点击尾页滑动到最右边边
+    private void onPageEndClick(View view) {
+        binding.hs.fullScroll(View.FOCUS_RIGHT);
+        loadPage(view);
+    }
+
+    private void loadPage(View view) {
+        String query = binding.input.getText().toString();
+        dismissKeyboard(view.getWindowToken());
+        Integer pageNo = (Integer) view.getTag();
+        if (pageNo != null) {
+            currentPage = pageNo;
             viewModel.loadPage(currentPage, query);
         }
     }
@@ -111,7 +135,7 @@ public class ArticleList2Fragment extends Fragment {
         articleAdapter.replace(list);
         binding.addressList.smoothScrollToPosition(0);
         //在获取第一页的时候动态添加页面
-        Log.d(TAG, "handleResponse: "+data.getPageCount());
+        Log.d(TAG, "handleResponse: " + data.getPageCount());
         if (data.getCurPage() == 1) {
             int count = data.getPageCount() - 2;
             binding.container.removeAllViews();
@@ -148,8 +172,8 @@ public class ArticleList2Fragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         binding.home.setTag(1);
         binding.end.setTag(1);
-        binding.home.setOnClickListener(this::onPageTextClick);
-        binding.end.setOnClickListener(this::onPageTextClick);
+        binding.home.setOnClickListener(this::onPageHomeClick);
+        binding.end.setOnClickListener(this::onPageEndClick);
         binding.search.setOnClickListener((v -> {
             String query = binding.input.getText().toString();
             dismissKeyboard(view.getWindowToken());
